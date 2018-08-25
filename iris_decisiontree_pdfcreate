@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+
+import pandas as pd
+import numpy as np
+# 读取excel数据表格，使用pandas,返回dataframe对象(一个抽象的二维表结构)，记为df
+names = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'class']
+# sepal：萼片   petal：花瓣
+df = pd.read_csv('iris.txt', header=None, names=names)
+# 打印数据概要信息
+print((df.describe()))
+# print (df)
+# 替换类别数据，将Iris-virginica等换成1,2,3，这是很实用的技巧
+size_mapping = {
+           'Iris-setosa': 3,
+           'Iris-versicolor': 2,
+           'Iris-virginica': 1}
+df['class'] = df['class'].map(size_mapping)
+# print(df.describe())
+xdata = df[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']]
+y = df['class']
+# 数据可视化：属性值与类别的关系
+import matplotlib.pyplot as plt
+vmarker = {3: '*', 2: '^', 1: '.', }
+vcolor = {3: 'r', 2: 'y', 1: 'b', }
+mValue = [vmarker[i] for i in df.iloc[:, 4]]
+cValue = [vcolor[i]  for i in df.iloc[:, 4]]
+pairs = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+plt.subplots_adjust(wspace=0.3, hspace=0.3)
+for i, (x_index, y_index) in enumerate(pairs):
+    plt.subplot(2, 3, i + 1)
+    for _marker, _x, _y, color in zip(mValue, df.iloc[:, x_index], df.iloc[:, y_index], cValue):
+        plt.scatter(_x, _y, marker=_marker, c=color)
+    plt.xlabel(df.columns.values.tolist()[x_index])
+    plt.ylabel(df.columns.values.tolist()[y_index])
+# plt.savefig("Img/IrisSCATTER.png" , dpi=300)
+plt.show()
+ 
+# 随机拆分训练、测试样本(请参考sklearn官网第3章)
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(xdata, y, test_size=0.3, random_state=66)
+
+# 决策树
+from sklearn import tree
+clf = tree.DecisionTreeClassifier(criterion="entropy")
+clf.fit(x_train, y_train)
+# clf.fit(xdata, y)
+
+import pydotplus
+import graphviz
+#dot_data = tree.export_graphviz(clf, out_file=None) 
+#graph = pydotplus.graph_from_dot_data(dot_data) 
+#graph.write_pdf("Img/iris.pdf")
+
+dot_data = tree.export_graphviz(clf, out_file=None,
+                         filled=True, rounded=True,
+                         special_characters=True)
+graph = graphviz.Source(dot_data)
+graph.render("Iris_DecisionTree", "Img/", view=True)
